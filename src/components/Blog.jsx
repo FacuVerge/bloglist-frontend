@@ -10,7 +10,7 @@ const Blog = ({ blog, user, putBlog, deleteBlog }) => {
 	}
 
 	return (
-		<>
+		<div className='blog'>
 			{details ?
 				<BlogDetails blog={blog} setDetails={setDetails} user={user} putBlog={putBlog} deleteBlog={deleteBlog}/> :
 				<div>
@@ -18,7 +18,7 @@ const Blog = ({ blog, user, putBlog, deleteBlog }) => {
 					<button type='button' onClick={handleViewClick}>View</button>
 				</div>
 			}
-		</>
+		</div>
 	)
 
 }
