@@ -5,6 +5,7 @@ import Togglable from './components/Togglable'
 import Notification from './components/Notification'
 import blogService from './services/blogs'
 import loginService from './services/login'
+import userService from './services/users'
 
 const App = () => {
 
@@ -23,6 +24,8 @@ const App = () => {
 			const user = JSON.parse(loggedUserJSON)
 			setUser(user)
 			blogService.setToken(user.token)
+			userService.setToken(user.token)
+			blogService.getAll().then(blogs => setBlogs(blogs.sort((a, b) => b.likes - a.likes)))
 		}
 	}, [])
 
@@ -39,11 +42,49 @@ const App = () => {
 		blogService
 			.create(blogObject)
 			.then(returnedBlog => {
-				setBlogs(blogs.concat(returnedBlog))
+				returnedBlog = {
+					...returnedBlog, 
+					user: {
+						id: user.id,
+						name: user.name,
+						username: user.username
+					}
+				}
+				setBlogs(blogs.concat(returnedBlog).sort((a, b) => b.likes - a.likes))
 				notificate('A new Blog was created!', 'success')
 			})
+			.catch(error => notificate(error.message, "error"))
 	}
 
+	const putBlog = (blogObject, id) => {
+		blogService
+			.put(blogObject, id)
+			.then(returnedBlog => {
+				returnedBlog = {
+					...returnedBlog, 
+					user: {
+						id: user.id,
+						name: user.name,
+						username: user.username
+					}
+				}
+				setBlogs(blogs.map(blog => blog.id !== id ? blog : returnedBlog).sort((a, b) => b.likes - a.likes))
+				notificate('A Blog was updated successfully!', 'success')
+			})
+			.catch(error => notificate(error.message, "error"))
+	}
+
+	const deleteBlog = id => {
+		if (window.confirm('You are about to delete a blog')) {
+			blogService
+			.deleteBlog(id)
+			.then(() => {
+				setBlogs(blogs.filter(blog => blog.id !== id).sort((a, b) => b.likes - a.likes))
+				notificate('A Blog was deleted successfully!', 'success')
+			})
+			.catch(error => notificate(error.message, "error"))
+		}
+	}
 
 	const handleLogin = async (event) => {
 		event.preventDefault()
@@ -58,7 +99,7 @@ const App = () => {
 			setUser(user)
 			setUsername('')
 			setPassword('')
-			await blogService.getAll().then(blogs => setBlogs(blogs))
+			await blogService.getAll().then(blogs => setBlogs(blogs.sort((a, b) => b.likes - a.likes)))
 		} catch (exception) {
 			notificate('Wrong credentials', 'error')
 		}
@@ -112,7 +153,13 @@ const App = () => {
 						/>
 					</Togglable>
 					{blogs.map(blog =>
-						<Blog key={blog.id} blog={blog} />
+						<Blog 
+							key={blog.id} 
+							blog={blog} 
+							user={user} 
+							putBlog={putBlog}
+							deleteBlog={deleteBlog}	
+						/>
 					)}
 				</div>
 			}
